@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <style>
+        /* Reset Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+
+        /* Full Page Styling with Lighter Gradient */
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #a3b8f8 0%, #c2a8e8 100%);
+            color: #2d3748;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Professional Analytics Container */
+        .container {
+            width: 500px;
+            padding: 35px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Header Styling */
+        h2 {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #4a5568;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        /* Input Field */
+        input {
+            width: 100%;
+            padding: 16px;
+            margin: 15px 0;
+            background: rgba(237, 242, 247, 0.8);
+            color: #2d3748;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input::placeholder { color: #a0aec0; }
+        input:focus { 
+            border-color: #7986f0;
+            box-shadow: 0 0 0 3px rgba(121, 134, 240, 0.2);
+            background: white;
+        }
+
+        /* Modern Button */
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #4fd1c5;
+            background: linear-gradient(to right, #4fd1c5, #38b2ac);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(79, 209, 197, 0.2);
+            margin-top: 10px;
+        }
+
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(79, 209, 197, 0.3);
+            background: linear-gradient(to right, #38b2ac, #319795);
+        }
+
+        /* Result Display */
+        .result {
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 18px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.6s ease-in-out forwards;
+            color: #4a5568;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(237, 242, 247, 0.6);
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Model Results List */
+        ul { 
+            margin: 15px 0 0; 
+            padding: 0; 
+            list-style: none;
+        }
+
+        li { 
+            font-size: 16px; 
+            margin: 8px 0; 
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                width: 90%;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Sentiment Analysis</h2>
+        <form id="predictForm">
+            <input type="text" id="comment" placeholder="Type a comment..." required />
+            <button type="submit">Analyze Sentiment</button>
+        </form>
+        <div class="result" id="result"></div>
+        <div class="result" id="individualResults"></div>
+    </div>
+
+    <script>
+        document.getElementById("predictForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const commentInput = document.getElementById("comment");
+            const comment = commentInput.value.trim();
+            document.getElementById("result").textContent = "Analyzing...";
+
+            if (!comment) {
+                document.getElementById("result").textContent = "Please enter a comment.";
+                return;
+            }
+            
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ comment })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("result").innerHTML = `<strong>Final Sentiment:</strong> ${data.final_sentiment}`;
+                    let individualResultsHTML = "<h3>Model Predictions:</h3><ul>";
+                    for (const [model, sentiment] of Object.entries(data.individual_model_predictions)) {
+                        individualResultsHTML += `<li>${model}: ${sentiment}</li>`;
+                    }
+                    individualResultsHTML += "</ul>";
+                    document.getElementById("individualResults").innerHTML = individualResultsHTML;
+                } else {
+                    document.getElementById("result").textContent = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById("result").textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
